@@ -1,0 +1,311 @@
+---
+title: "Final Report"
+author: 'Ryley Traverse, Jeffrey Sims, and Daniel Glynn'
+date: 'December 2021'
+output:
+  pdf_document:
+    fig_caption: yes
+    extra_dependencies: ["flafter"]
+header-includes:
+ - \renewcommand{\topfraction}{.85}
+ - \renewcommand{\bottomfraction}{.7}
+ - \renewcommand{\textfraction}{.15}
+ - \renewcommand{\floatpagefraction}{.66}
+ - \setcounter{topnumber}{3}
+ - \setcounter{bottomnumber}{3}
+ - \setcounter{totalnumber}{4}
+---
+
+```{r Front Matter, include=FALSE}
+
+# clean up & set default chunk options
+rm(list = ls())
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+
+#install.packages(lme4)
+#install.packages(ggthemes)
+#install.packages(Stat2Data)
+
+# packages
+library(tidyverse) # for example
+library(mosaic)    # for example
+library(ggformula) # for example
+library(car)       # for example
+library(tinytex)   # for example
+library(emmeans)   # for example
+library(lme4)
+library(Stat2Data)
+
+
+# read in data 
+FrenchFry <- read.csv("C:\\Users\\ryley\\Downloads\\FrenchFryData.csv")
+# use this space to do any data processing you need
+FrenchFry$NTemp <- -abs(FrenchFry$Temperature -5) + 5
+FrenchFry$NColor <- -abs(FrenchFry$Color -5) + 5
+
+FrenchFry
+```
+
+
+## 1. Project Description
+
+The French Fry study, that the resulting french fry data was collected from, was a designed experiment in which participants would come in each day and try two different kinds of oil both at the same randomly determined age in a random order. The study was ran for eight days over a nine day period (with day five having no data collected) and the same two brands of oil were used each day. The first four days used the oil brands Mel Fry Free and Clear Valley the last four days used the brands Mel Fry and Advantage. The participant was not given any information about the differences between the plates or if there was any difference present. They were then asked to rate the temperature, appearance, color, taste, and texture (the five flavor attributes) and then give an overall satisfaction score for each plate of fries. All this data was recorded as well as the brand of oil, sex of participant, age of oil, and a couple of factors that indicate which participant was tasting and which day they came in. The data is in a multi-leveled with the person being the level two aspect and each plate of french fries tried being the level one. The studies objective is to answer the following research questions:
+
+## 1.1 Research Questions
+
+**Question 1:** 
+Which combination of oil brand and oil age results in the 
+highest average score for overall satisfaction?
+
+**Question 2:** 
+What is the relationship between the five flavor attributes 
+(Taste, Texture, Temperature, Appearance, and Color) and the 
+response for overall satisfaction?
+
+This is in order to ensure a chain of restaurants that is thinking about expanding can come up with standardized process of their flagstone product being french fries. They already have in place protocols for salt, oil temperature, potato variety, fry shape, and cooking time, but the age and type of oil used to cook the fries varies from store to store. Our goal is to decided which combination produces the most satisfaction in the target audience of young adults. The owner of the franchise is also curious how the five flavor attributes contribute to the overall satisfaction of a participant. Since randomization was used and this experiment was designed versus being strictly observational, we want to use the given data to conclude cause and effect relationships to answer the research questions. The following exploratory data analysis is to get a frim grasp on what the variables look like and come up with hypotheses on the relationship between the variables to make initial guesses on the answer to our research questions.
+
+
+## 1.2 Variables
+
+**Variables name, measurement method, and data level:**
+
+ID: How Variable Was Measured: & Given in ascending order based on when participant and on which day they showed up -> Level 2.
+
+Day: Which day the participant came to taste (1-7) -> Level 2.
+
+Session: Which session the participant came to (Only one session so all participants were assigned 1) -> Level 2.
+
+Samp.Set: Which number participant they were each day (restarted back to 1 for the first person on each day) -> Level 2.
+
+Sex: Whether the tester is Male or Female -> Level 2.
+
+Age: The age of the oil used to cook the fries (1-5) -> Level 1.
+
+Brand: Which brand of oil the french fries tried were -> Level 1.
+
+Temperature: The rating the participant gave that plate of french fries based on temperature (1-9): one being too cold, nine being too hot, and five being just right -> Level 1.
+
+Appearance: The rating the participant gave that plate of french fries based on appearance (1-9): one being very poor and, nine being excellent -> Level 1.
+
+Color: The rating the participant gave that plate of french fries based on color (1-9): one being too light, nine being too dark, and five being just right -> Level 1.
+
+Taste: The rating the participant gave that plate of french fries based on Taste (1-9): one being very poor, nine being excellent -> Level 1.
+
+Texture: The rating the participant gave that plate of french fries based on Texture (1-9): one being very poor, nine being excellent -> Level 1.
+
+Satisfaction: The rating the participant gave that plate of french fries based on overall satisfaction (1-9): one being very poor, nine being excellent -> Level 1.
+
+NTemp: The normalized rating of Temperature in which a score of 9 was treated the same as a score of 1, a score of 8 was treated the same as a score of 2, a score of 7 was treated the same as a score of 3, and a score of 6 was treated the same as a score of 4. A score of age 5 was kept constant as the best temperture. We calculated this in order to put the ratings of temperature on a similar scale as the other 3 flavor attributes in order to make 1 simply a bad temperature and 5 a good temperature.
+
+NColor: The normalized rating of Color in which a score of 9 was treated the same as a score of 1, a score of 8 was treated the same as a score of 2, a score of 7 was treated the same as a score of 3, and a score of 6 was treated the same as a score of 4. A score of age 5 was kept constant as just the best color. We calculated this in order to put the ratings of color on a similar scale as the other 3 flavor attributes in order to make 1 simply a bad color and 5 a good color.
+
+
+
+Our primary response variable is the participants overall satisfaction with the fries they ate. Our explanatory variables of interest are Brand, Age, and the Five Flavor Attributes. 
+In terms of the five design principles being prevalent in the french fry study, comparison is present because on each day two brands are used, so participants can compare the two oils used on each day. Replication was used due to the study being conducted over eight days and multiple participants trying each oil at each age. Blocking was used since each day the participant would try two oils at the same age. Blocking was also used each day as the same two brands of oil were used over the whole day. Crossing was used due to every possible age and oil combination being tried multiple times. Finally, randomization was incorporated in choosing what age of oil the participant would receive.
+
+#  2. Detailed Exploratory Data Analysis (EDA)
+
+
+*Figure \ref{fig:example1} shows that the age of the oil seems to influence the average fry satisfaction score the most with oils of age 5 being the most well liked. We can also see that Mel Fry was the most well liked at age 5, but overall the brand of oil did not seem to influence the satisfaction score as much as the age of oil. There does seem to be a slight interaction due to some of the lines crossing which signals for a need to include an interaction term in our final model.*
+```{r example1, fig.cap = "Mean satisfaction for each brand graphed by age of oil used.", echo = F, out.width="50%", fig.align="center"}
+
+mymeans <- FrenchFry %>%
+  group_by(Brand, Age) %>% 
+  summarize(n = n(), mean = mean(Satisfaction))
+
+gf_point(mean ~ Brand, color = ~ factor(Age), data = mymeans) %>% gf_line(mean ~ Brand, group = ~ factor(Age), data = mymeans)
+
+```
+
+*Figures \ref{fig:example2}, \ref{fig:example3}, \ref{fig:example4}, \ref{fig:example5}, and \ref{fig:example6} show the relationship between overall satisfaction and each of the five flavor attributes (normalized) respectively. From these scatter plots, you can see that taste and texture appear to have the strongest linear relationship with satisfaction. Appearance also seems to have a linear relationship with satisfaction, but there is not as obvious of a relationship between normalized temperature and satisfaction or normalized color and satisfaction. *
+```{r example2, fig.cap = "Satisfaction vs Normalized Temperature", echo = F, out.width="50%", fig.align="center"}
+gf_point(Satisfaction ~ NTemp, data = FrenchFry) %>%
+  gf_jitter() %>%
+  gf_lm()
+```
+
+
+```{r example3, fig.cap = "Satisfaction vs Appearance", echo = F, out.width="50%", fig.align="center"}
+gf_point(Satisfaction ~ Appearance, data = FrenchFry) %>%
+  gf_jitter()%>%
+  gf_lm()
+```
+
+
+```{r example4, fig.cap = "Satisfaction vs Normalized Color", echo = F, out.width="50%", fig.align="center"}
+gf_point(Satisfaction ~ NColor, data = FrenchFry) %>%
+  gf_jitter()%>%
+  gf_lm()
+```
+
+
+```{r example5, fig.cap = "Satisfaction vs Taste", echo = F, out.width="50%", fig.align="center"}
+gf_point(Satisfaction ~ Taste, data = FrenchFry) %>%
+  gf_jitter()%>%
+  gf_lm()
+```
+
+
+```{r example6, fig.cap = "Satisfaction vs Texture", echo = F, out.width="50%", fig.align="center"}
+gf_point(Satisfaction ~ Texture, data = FrenchFry) %>%
+  gf_jitter()%>%
+  gf_lm()
+```
+
+*Final Conclusions:*
+Overall, it seems like the age of the oil is most influential in predicting the overall satisfaction of the french fries tried, with age five having the most positive reviews by a significant amount. Which brand was most well liked varied a little bit from age to age, but the brand that was most well liked at age five, was Mel Fry with Advantage sitting at a close second place. If a prediction was to be made about the outcome of the best oil brand and age combination, Mel Fry and age five would be the best bet. It was interesting to see that fries that were of age three were not sampled near as much as any of the other ages which is important to note. We also witnessed that normalized color and normalized temperature did not seem to be that correlated with the overall satisfaction score, but appearance and texture seemed to have a decent amount of correlation with satisfaction. Visually, taste seemed to be the best predictor for an overall satisfaction score, which is not all too surprising.
+
+
+# 3. Statistical Analysis 
+
+```{r}
+FryFive <- FrenchFry[FrenchFry$Age == 5,]
+
+#glimpse(FrenchFry)
+Model1 <- lmer(Satisfaction ~ Brand + factor(Age) + (1|ID), data = FrenchFry)
+#summary(Model1)
+
+Model1.1 <- lmer(Satisfaction ~ Brand + (1|ID), data = FryFive)
+#summary(Model1.1)
+
+mydiff <- emmeans(Model1, ~Brand)
+#pairs(mydiff)
+#plot(mydiff, comparisons = T)
+mydiff2 <- emmeans(Model1, ~factor(Age))
+#pairs(mydiff2)
+#plot(mydiff2, comparisons = T)
+#mydiff3 <- emmeans(Model1.1, ~ Brand)
+#pairs(mydiff3)
+#plot(mydiff3)
+```
+
+
+```{r,fig.cap = "Mean Comparisons for Brand (Using Model 1)", echo = F, out.width="50%", fig.align="center"}
+plot(mydiff, comparisons = T)
+```
+
+```{r,fig.cap = "Mean Comparisons for Age (Using Model 1)", echo = F, out.width="50%", fig.align="center"}
+plot(mydiff2, comparisons = T)
+```
+
+```{r, fig.cap = "Residual Plot for First Model", echo = F, out.width="50%", fig.align="center"}
+plot(Model1)
+```
+
+```{r, fig.cap = "Normal qq Plot for First Model", echo = F, out.width="50%", fig.align="center"}
+gf_qq(~residuals(Model1)) %>% gf_qqline()
+```
+
+```{r, fig.cap = "Normal qq Plot for First Model ", echo = F, out.width="50%", fig.align="center"}
+gf_qq(~coef(Model1)$ID[,1]) %>% gf_qqline()
+```
+
+```{r, fig.cap = "Histogram of Residuals for First Model", echo = F, out.width="50%", fig.align="center"}
+gf_histogram(~residuals(Model1))
+```
+
+
+
+```{r}
+Model2 <- lmer(Satisfaction ~ Taste + Texture + NColor + NTemp + Appearance + (1|ID), data = FrenchFry)
+#summary(Model2)
+```
+
+```{r, fig.cap = "Residual Plot for Second Model", echo = F, out.width="50%", fig.align="center"}
+plot(Model2)
+```
+
+```{r, fig.cap = "Normal qq Plot for Second Model", echo = F, out.width="50%", fig.align="center"}
+gf_qq(~residuals(Model2)) %>% gf_qqline()
+```
+
+```{r, fig.cap = "Normal qq Plot for Second Model", echo = F, out.width="50%", fig.align="center"}
+gf_qq(~coef(Model2)$ID[,1]) %>% gf_qqline()
+```
+
+```{r, fig.cap = "Histogram of Residals for Second Model", echo = F, out.width="50%", fig.align="center"}
+gf_histogram(~residuals(Model2))
+```
+
+
+**Conclusions:**
+
+For our first research question we decided to fit a mixed model that uses Brand and Age as fixed effects and ID as the random effect in order to predict Satisfaction. We decided on a mixed model due to the lack of independence between each observation due to a participant trying two plates of french fries and giving ratings for both. When checking conditions for the mixed model, we concluded that that the conditions for equal variance, and normality of errors were met based on the residual and normal qq plots produced using the model we decided on. There is a minimal left skew in the distribution of residuals, but regardless there is still very strong symmetry which makes us unconcerned about the mixed model conditions. Based on the outputs from our model, we can see that Age 4 and Age 5 are the only significantly different factors in the model when compared to the base case that uses age 1 Advantage oil. 
+
+We then computed the difference in means for each brand as well as the difference in means for each oil and it should be noted that age 5 fries were significantly different in satisfaction score from all other ages except age 4 which had a p-value of 0.1031 which is still pretty small but not enough to be considered statistically significant. It can also be shown that oil of age 4 had statistically significantly different satisfaction scores when compared with the satisfaction score of fries cooked with oil of age 1. We also noticed that there is no statistical evidence to show a difference in satisfaction scores between brands of oil at any age, but particularly in brands of age 5. That being said, Mel Fry and Advantage typically had slightly higher satisfaction scores than Mel Fry Free and Clear Valley, but the difference was not significant enough statistically to make a firm conclusion on the best brand of oil.
+
+To answer the second research question, we decided on a second mixed model that uses taste, texture, our transformed temperature and color data, as well as appearance as fixed effects and ID again as the random effect to predict overall satisfaction. The conditions for this model are also met due to a random scattering above and below the line with no obvious flaring or pattern in the residual plot and a highly symmetric qq plot with light tails. There is a decent amount of bending away from the line both on the left and right sides of the normal qq plot, but after examining the histogram of residuals, we decided that this is plainly due to the lightness of the tails and cannot be attributed to any skew in the graph. Our conclusions based on the summery of this model are that all five of the flavor attributes contribute to the overall satisfaction statistically, but that taste is by far the most highly correlated which is of no surprise due to the scatter plots examined during EDA. It also makes a lot of sense logically that if someone thinks a french fry tastes really good, their overall satisfaction would reflect this same praise.
+
+
+# 4. Recommendations 
+
+**Question 1:** 
+Which combination of oil brand and oil age results in the 
+highest average score for overall satisfaction?
+
+Our personal recommendation is that Mel Fry age 5 oil results in the highest average satisfaction score of french fries when compared to all other studied brand and age combinations based on the previous statistical analysis.
+
+**Question 2:** 
+What is the relationship between the five flavor attributes 
+(Taste, Texture, Temperature, Appearance, and Color) and the 
+response for overall satisfaction?
+
+An increase in positive feedback for all five of the flavor attributes correlates to an increase in the overall satisfaction score for french fries. It should be noted that taste has by far the highest correlation with satisfaction, but all other attributes are significantly correlated to satisfaction as well. 
+
+
+# 5. Additional Considerations
+
+It should be noted that even though we recommended french fries to be cooked with Mel Fry oil at age 5, the brand of oil was not statistically significant enough to make a firm conclusion. All brands of oil resulted in around the same satisfaction score, so it should be noted that any oil brand could be used with resulting satisfaction scores being similar. It might be in the interest of the company to instead decide brand of oil instead based on price. Because each brand of oil had similar average satisfaction scores, choosing the oil with the lowest price point would be a smarter move economically. It is also important to note that age 4 was also highly liked, so it might be worth considering using oil of that age if a large disparity in price exists in favor of age 4 oil. However, it is important to note that our stance in favor of oil age 5 is stronger than our preference of Brand Mel Fry oil. It is also important to point out that the brand of oil that resulted in higher satisfaction scores on average, regardless of oil age, was Advantage brand oil.
+
+Some concerns we have about the study revolve around the resulting data collected in that comparisons between oil brand remain in question due to only Mel Fry Free and Clear Valley having distinct comparison and Mel Fry and Advantage having distinct comparison. This issue arose due to study design in that these pairs of oil brand were used during the entirety of the trial. It would have been better to cross all brands over the eight days to have a more clear comparison. It is also interesting that these pairs of brands scored similarly in overall average satisfaction. We cannot conclude that this was a result of the poor study design, but it is an interesting result to note. The other concern we had was that age 3 oil was tried significantly less than any of the other aged oils. This is a concern when looking at comparisons of oil age due to there being less french fries sampled of oil this age. 
+
+In order to normalize the data related to color and and temperature, we decided to consider too dark the same as too light and too hot the same as too cold in order to use this data in our model. This is concerning due to the initial ratings not reflecting this same scale. It is an even bigger concern when noticing that for some participants a rating of closer to too dark resulted in a higher satisfaction score. The scale of these two variables should be changed in future studies to be more similar to other variables of 1 being very poor and 9 being excellent. This would exclude the need to reassign ratings of the data in order to make reasonable conclusions, as well as allow participants to consider their preferred color as just right.
+
+
+# Technical Appendix 
+
+*The following statistics shows the average satisfaction score for each brand tried at each age of oil.*
+```{r}
+mean(Satisfaction ~ Brand + Age, data = FrenchFry)
+```
+
+*Figure \ref{fig:example7} shows that brands Clear Valley and Mel Fry Free were used on the first four days and Advantage and Mel Fry were used on the last four days. It appears as if more people showed up to taste on the last four days of tasting.*
+```{r example7, fig.cap = "Number of plates of french fries tried each day and which brand was used on said day.", echo = F, out.width="50%", fig.align="center"}
+gf_bar(~Day, color = ~Brand, data = FrenchFry)
+```
+
+*Figure \ref{fig:example8} Shows that all brands were tried around the same amount of times with Mel Fry and Advantage having over one hundred more observations than Mel Fry Free and Clear Valley. This disparity is due to an uneven amount of people showing up for each period of tastings*
+```{r example8, fig.cap = "Number of plates of french fries tried for each brand.", echo = F, out.width="50%", fig.align="center"}
+gf_bar(~Brand, data = FrenchFry)
+```
+
+*Figure \ref{fig:example9} shows that there is a decent amount of variability in the amount of french fries tried at each oil age. Ages one and two were tried a decent amount more than ages four and five with age three having only just about 100 tastings (which is significantly less than any other age). This disparity might be accounted for by the random assignment of age being biased in some way.*
+```{r example9, fig.cap = "Number of plates of french fries for each age.", echo = F, out.width="50%", fig.align="center"}
+gf_bar(~Age, data = FrenchFry)
+```
+
+*Figure \ref{fig:example10} shows that most people rated the fies with a satisfaction score of between six and eight. It also appears that Advantage had higher satisfation scores than any of the other brands, but we will confirm this later on.*
+```{r example10, fig.cap = "Distribution of satisfaction scores colored by brand.", echo = F, out.width="50%", fig.align="center"}
+gf_histogram(~Satisfaction, color = ~Brand, data = FrenchFry)
+```
+
+*Figure \ref{fig:example11} shows that Brand does not appear to have a significant effect on overall satisfaction*
+```{r example11, fig.cap = "Overall Satisfaction as it relates to Brand of Oil.", echo = F, out.width="50%", fig.align="center"}
+gf_point(Satisfaction ~ Brand, color = ~Age, data = FrenchFry) %>%
+  gf_jitter()
+```
+
+*We can also see, from Figure \ref{fig:example12}, that the age of the oil also does not appear to have a significant effect on overall satisfaction, however we do see that there appear to be less observations with an age of 3 and the most with an age of 1 and 2.*
+```{r example12, fig.cap = "Overall Satisfaction as it relates to Age of Oil.", echo = F, out.width="50%", fig.align="center"}
+gf_point(Satisfaction ~ Age, color = ~Brand, data = FrenchFry) %>%
+  gf_jitter()
+```
+
+*Figure \ref{fig:example13} is a scatterplot matrix with Satisfaction, Temperature, Appearance, Color, Taste, and Texture which can be used to check for interactions between the variables that we may want to include in a future model. There do no appear to be many significant relationships between predictors other than between taste and texture.*
+```{r example13, fig.cap = "Scatterplot Matrix", echo = F, out.width="50%", fig.align="center"}
+partial_FrenchFry <- subset(FrenchFry, select = c(Satisfaction, Temperature, Appearance, Color, Taste, Texture))
+plot(partial_FrenchFry)
+```
+
